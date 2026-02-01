@@ -1,0 +1,83 @@
+# Simulation outputs
+*.vcd
+*.wlf
+*.vpd
+*.fsdb
+*.shm/
+*.trn
+*.dsn
+*.pa.info
+
+# Compiled libraries and objects
+work/
+*.vo
+*.vro
+modelsim.ini
+transcript
+obj_dir/
+
+# Synopsys VCS
+csrc/
+simv
+simv.daidir/
+ucli.key
+*.log
+*.key
+DVEfiles/
+inter.vpd
+urgReport/
+
+# Cadence tools
+xcelium.d/
+xrun.log
+xrun.history
+*.xmw/
+cds.lib
+hdl.var
+
+# Vivado
+*.jou
+*.str
+*.xpr
+*.runs/
+*.cache/
+*.hw/
+*.ip_user_files/
+*.sim/
+*.gen/
+.Xil/
+
+# Quartus
+db/
+incremental_db/
+output_files/
+*.qws
+*.rpt
+*.smsg
+*.summary
+
+# Coverage
+*.ucdb
+*.covdb/
+urgReport/
+coverage/
+
+# Lint tools
+*.waiver
+spyglass_reports/
+
+# Editor/IDE
+*.swp
+*.swo
+*~
+.vscode/
+.claude/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+build/
+out/
