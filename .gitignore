@@ -81,3 +81,6 @@ Thumbs.db
 # Build artifacts
 build/
 out/
+
+# Documents
+*/DDI0403E_e_armv7m_arm.pdf
