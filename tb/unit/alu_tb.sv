@@ -47,7 +47,7 @@ module Alu_tb;
             ALU_AND: return a & b;
             ALU_ORR: return a | b;
             ALU_EOR: return a ^ b;
-            default: return 32'hFFFFFFFF;
+            default: return 32'hFFFFFFFF; //Error code if unexpected alu opcode
         endcase
     endfunction
 
@@ -111,7 +111,7 @@ module Alu_tb;
 
     initial begin
         //initialize signals
-        $display("Initilizing all internal signals and booting in reset state due to active low");
+        $display("Initilizing all internal signals");
 
         //signals bound to dut ports
         clk        = 0;
@@ -128,6 +128,7 @@ module Alu_tb;
         @(posedge clk);
         @(posedge clk);
 
+        $display("Running Add Tests");
         // ===== ADD Tests =====
         // Identity: A + 0 = A
         test_alu(ALU_ADD, 32'h5, 32'h0);                // identity
@@ -155,6 +156,7 @@ module Alu_tb;
         test_alu(ALU_ADD, 32'h1, 32'hFFFFFFFE);         // N=1 (result is 0xFFFFFFFF)
 
         // ===== SUB Tests =====
+        $display("Running Sub Tests");
         // Basic subtraction
         test_alu(ALU_SUB, 32'h10, 32'h5);               // 16 - 5 = 11
         test_alu(ALU_SUB, 32'h5, 32'h5);                // 5 - 5 = 0 (Z=1)
@@ -163,22 +165,26 @@ module Alu_tb;
         test_alu(ALU_SUB, 32'h7FFFFFFF, 32'hFFFFFFFF);  // max pos - (-1) (V=1, overflow)
 
         // ===== AND Tests =====
+        $display("Running bitwise AND Tests");
         test_alu(ALU_AND, 32'hFFFFFFFF, 32'h0);         // AND with 0 = 0 (Z=1)
         test_alu(ALU_AND, 32'hFFFFFFFF, 32'hFFFFFFFF);  // AND with all 1s = all 1s (N=1)
         test_alu(ALU_AND, 32'hAAAAAAAA, 32'h55555555);  // alternating bits = 0 (Z=1)
         test_alu(ALU_AND, 32'h12345678, 32'hFF00FF00);  // mask operation
 
         // ===== ORR Tests =====
+        $display("Running bitwise ORR Tests");
         test_alu(ALU_ORR, 32'h0, 32'h0);                // OR 0s = 0 (Z=1)
         test_alu(ALU_ORR, 32'hAAAAAAAA, 32'h55555555);  // alternating bits = all 1s (N=1)
         test_alu(ALU_ORR, 32'h12340000, 32'h00005678);  // combine halves
 
         // ===== EOR Tests =====
+        $display("Running bitwise EOR Tests");
         test_alu(ALU_EOR, 32'hFFFFFFFF, 32'hFFFFFFFF);  // XOR same = 0 (Z=1)
         test_alu(ALU_EOR, 32'hAAAAAAAA, 32'h55555555);  // XOR alternating = all 1s (N=1)
         test_alu(ALU_EOR, 32'h0, 32'h12345678);         // XOR with 0 = identity
 
         // ===== Bulk Random Tests =====
+        $display("Running Bulk Random Tests");
         repeat(1000) begin
             test_alu(alu_op_t'($urandom_range(0,4)), $urandom, $urandom);
         end
