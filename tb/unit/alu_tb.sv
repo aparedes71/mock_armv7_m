@@ -115,8 +115,7 @@ module Alu_tb;
 
         //signals bound to dut ports
         clk        = 0;
-        rst_n      = 0;
-        alu_opcode = 4'b0;
+        alu_opcode = ALU_ADD;
         data_in1 = 32'b0;
         data_in2 = 32'b0;
 
