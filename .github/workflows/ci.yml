@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Verilator
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y verilator
+
+      - name: Show Verilator version
+        run: verilator --version
+
+      - name: Compile ALU
+        run: |
+          verilator --binary --timing -j 0 \
+            --top-module Alu_tb \
+            rtl/pkgs/alu_pkg.sv rtl/alu.sv tb/unit/alu_tb.sv
+
+      - name: Run ALU Tests
+        run: ./obj_dir/VAlu_tb
+
+      - name: Compile Register File
+        run: |
+          verilator --binary --timing -j 0 \
+            --top-module register_file_tb \
+            rtl/register_file.sv tb/unit/register_file_tb.sv
+
+      - name: Run Register File Tests
+        run: ./obj_dir/Vregister_file_tb
