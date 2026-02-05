@@ -43,6 +43,15 @@ jobs:
       - name: Show Verilator version
         run: verilator --version
 
+      - name: Compile Register File
+        run: |
+          verilator --binary --timing -j 0 \
+            --top-module register_file_tb \
+            rtl/register_file.sv tb/unit/register_file_tb.sv
+
+      - name: Run Register File Tests
+        run: ./obj_dir/Vregister_file_tb
+
       - name: Compile ALU
         run: |
           verilator --binary --timing -j 0 \
@@ -52,11 +61,11 @@ jobs:
       - name: Run ALU Tests
         run: ./obj_dir/VAlu_tb
 
-      - name: Compile Register File
+      - name: Compile xPSR
         run: |
           verilator --binary --timing -j 0 \
-            --top-module register_file_tb \
-            rtl/register_file.sv tb/unit/register_file_tb.sv
+            --top-module xpsr_tb \
+            rtl/pkgs/alu_pkg.sv rtl/xpsr.sv tb/unit/xpsr_tb.sv
 
-      - name: Run Register File Tests
-        run: ./obj_dir/Vregister_file_tb
+      - name: Run xPSR Tests
+        run: ./obj_dir/Vxpsr_tb
