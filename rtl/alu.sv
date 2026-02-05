@@ -20,7 +20,7 @@ module Alu #()
     //ALu_op decoding and execution combinational logic
     always_comb begin : ALU_Execution
 
-        case (alu_opcode)
+        unique case (alu_opcode)
             ALU_ADD: begin
                 result = {1'b0, data_in1} + {1'b0, data_in2};  // packing on a zero for 33-bit + 33-bit = 32-bit result with carry at bit 33
             end
@@ -36,6 +36,15 @@ module Alu #()
             ALU_EOR: begin
                 result = {1'b0, data_in1} ^ {1'b0, data_in2};
             end
+            ALU_LSR: begin
+                result = {1'b0, data_in1 >> data_in2[4:0]};
+            end
+            ALU_LSL: begin
+                result = {1'b0, data_in1} << data_in2[4:0];
+            end
+            ALU_ASR: begin
+                result = {1'b0, $signed(data_in1) >>> data_in2[4:0]}; //Need to cast to signed so doesnt autofill zeros when sign bit is 1
+            end
             default: begin
                 result = 33'b0;
             end
@@ -50,7 +59,7 @@ module Alu #()
         flags_out.z = (result[31:0] == 32'h0); //ignore top bit result[32] as it is just the carry value
 
         // C and V depend on operation
-        case (alu_opcode)
+        unique case (alu_opcode)
             ALU_ADD: begin
                 flags_out.c = result[32];  // sum is 33-bit
                 flags_out.v = (data_in1[31] == data_in2[31]) && (result[31] != data_in1[31]);
@@ -58,6 +67,14 @@ module Alu #()
             ALU_SUB: begin
                 flags_out.c = ~result[32];  // diff is 33-bit
                 flags_out.v = (data_in1[31] != data_in2[31]) && (result[31] != data_in1[31]);
+            end
+            ALU_LSL: begin
+                flags_out.c = result[32];
+                flags_out.v = 1'b0;
+            end
+            ALU_LSR, ALU_ASR: begin //Same carry and overflow values for these 2 ops
+                flags_out.c = (data_in2[4:0] != 0) ? data_in1[data_in2[4:0] - 1] : 1'b0; //Stores the last value that was shifted out
+                flags_out.v = 1'b0;
             end
             default: begin
                 flags_out.c = 1'b0;

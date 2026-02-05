@@ -20,6 +20,7 @@ module Alu_tb;
     integer pass_count     ;
     integer fail_count     ;
     integer test_count     ;
+    integer num_alu_ops = 8; // Total number of supported ALU opcodes (ADD,SUB,AND,ORR,EOR,LSL,LSR,ASR)
 
     Alu  dut(
         .alu_opcode(alu_opcode),
@@ -47,6 +48,9 @@ module Alu_tb;
             ALU_AND: return a & b;
             ALU_ORR: return a | b;
             ALU_EOR: return a ^ b;
+            ALU_LSL: return a << b[4:0];
+            ALU_LSR: return a >> b[4:0];
+            ALU_ASR: return $signed(a) >>> b[4:0];
             default: return 32'hFFFFFFFF; //Error code if unexpected alu opcode
         endcase
     endfunction
@@ -74,6 +78,15 @@ module Alu_tb;
                 sum = {1'b0, a} - {1'b0, b};
                 f.c = ~sum[32];  // ARM: C=1 means no borrow
                 f.v = (a[31] != b[31]) && (result[31] != a[31]);
+            end
+            ALU_LSL: begin
+                sum = {1'b0, a} << b[4:0];
+                f.c = sum[32];  // last bit shifted out (0 when shift=0)
+                f.v = 1'b0;
+            end
+            ALU_LSR, ALU_ASR: begin
+                f.c = (b[4:0] != 0) ? a[b[4:0] - 1] : 1'b0;  // last bit shifted out
+                f.v = 1'b0;
             end
             default: begin  // AND, ORR, EOR
                 f.c = 1'b0;  // bitwise ops don't affect C (or use shifter carry)
@@ -183,10 +196,69 @@ module Alu_tb;
         test_alu(ALU_EOR, 32'hAAAAAAAA, 32'h55555555);  // XOR alternating = all 1s (N=1)
         test_alu(ALU_EOR, 32'h0, 32'h12345678);         // XOR with 0 = identity
 
+        // ===== LSL Tests =====
+        $display("Running LSL Tests");
+        // Shift by 0 - no change
+        test_alu(ALU_LSL, 32'h1, 32'h0);                  // 1 << 0 = 1
+        test_alu(ALU_LSL, 32'hFFFFFFFF, 32'h0);           // no shift, no carry
+
+        // Basic shifts
+        test_alu(ALU_LSL, 32'h1, 32'h1);                  // 1 << 1 = 2
+        test_alu(ALU_LSL, 32'h1, 32'h1F);                 // 1 << 31 = 0x80000000 (N=1)
+        test_alu(ALU_LSL, 32'h1, 32'h10);                 // 1 << 16 = 0x00010000
+
+        // Carry flag - MSB shifted out
+        test_alu(ALU_LSL, 32'hFFFFFFFF, 32'h1);           // all 1s << 1 (C=1, N=1)
+        test_alu(ALU_LSL, 32'h80000000, 32'h1);           // MSB only << 1 = 0 (C=1, Z=1)
+
+        // Zero result
+        test_alu(ALU_LSL, 32'hFFFFFFFF, 32'h1F);          // all 1s << 31 = 0x80000000 (C=1, N=1)
+
+        // Pattern shift
+        test_alu(ALU_LSL, 32'hA5A5A5A5, 32'h4);          // nibble-aligned shift
+
+        // ===== LSR Tests =====
+        $display("Running LSR Tests");
+        // Shift by 0 - no change
+        test_alu(ALU_LSR, 32'h80000000, 32'h0);           // no shift (N=1)
+        test_alu(ALU_LSR, 32'hFFFFFFFF, 32'h0);           // no shift (N=1)
+
+        // Basic shifts
+        test_alu(ALU_LSR, 32'h80000000, 32'h1);           // 0x80000000 >> 1 = 0x40000000
+        test_alu(ALU_LSR, 32'h80000000, 32'h1F);          // 0x80000000 >> 31 = 1
+
+        // Carry flag - LSB shifted out
+        test_alu(ALU_LSR, 32'h1, 32'h1);                  // 1 >> 1 = 0 (C=1, Z=1)
+        test_alu(ALU_LSR, 32'hFFFFFFFF, 32'h1);           // all 1s >> 1 = 0x7FFFFFFF (C=1)
+
+        // Zero-fill (no sign extension)
+        test_alu(ALU_LSR, 32'hFFFFFFFF, 32'h1F);          // all 1s >> 31 = 1 (C=1)
+
+        // Pattern shift
+        test_alu(ALU_LSR, 32'hA5A5A5A5, 32'h4);          // nibble-aligned shift
+
+        // ===== ASR Tests =====
+        $display("Running ASR Tests");
+        // Shift by 0 - no change
+        test_alu(ALU_ASR, 32'h80000000, 32'h0);           // no shift (N=1)
+        test_alu(ALU_ASR, 32'h7FFFFFFF, 32'h0);           // no shift, positive
+
+        // Sign extension - negative values
+        test_alu(ALU_ASR, 32'h80000000, 32'h1);           // sign-extend: 0xC0000000 (N=1)
+        test_alu(ALU_ASR, 32'h80000000, 32'h1F);          // sign-extend: 0xFFFFFFFF (N=1)
+        test_alu(ALU_ASR, 32'hFFFFFFFF, 32'h1);           // -1 >> 1 = -1 (N=1, C=1)
+
+        // Positive values - behaves like LSR
+        test_alu(ALU_ASR, 32'h7FFFFFFF, 32'h1);           // 0x3FFFFFFF (C=1)
+        test_alu(ALU_ASR, 32'h40000000, 32'h1);           // 0x20000000
+
+        // Pattern shift
+        test_alu(ALU_ASR, 32'hA5A5A5A5, 32'h4);          // negative pattern nibble shift
+
         // ===== Bulk Random Tests =====
         $display("Running Bulk Random Tests");
         repeat(1000) begin
-            test_alu(alu_op_t'($urandom_range(0,4)), $urandom, $urandom);
+            test_alu(alu_op_t'($urandom_range(0, num_alu_ops - 1)), $urandom, $urandom);
         end
 
 
