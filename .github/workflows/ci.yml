@@ -19,7 +19,17 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y git help2man perl python3 make autoconf g++ flex bison ccache libfl2 libfl-dev zlib1g zlib1g-dev
 
+      - name: Cache Verilator build
+        id: cache-verilator
+        uses: actions/cache@v4
+        with:
+          path: |
+            /usr/local/bin/verilator*
+            /usr/local/share/verilator
+          key: verilator-v5.040-${{ runner.os }}
+
       - name: Build and install Verilator v5.040
+        if: steps.cache-verilator.outputs.cache-hit != 'true'
         run: |
           git clone https://github.com/verilator/verilator.git verilator-src
           cd verilator-src
