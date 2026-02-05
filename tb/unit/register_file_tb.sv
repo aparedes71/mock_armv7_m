@@ -176,11 +176,11 @@ module register_file_tb;
 
         if (fail_count == 0) begin
             $display("  ALL TESTS PASSED");
-        end else begin
-            $display("  SOME TESTS FAILED");
+            $finish;
         end
-
-        $finish(fail_count);
+        else begin
+            $fatal(1, "  SOME TESTS FAILED");
+        end
     end
 
 endmodule
