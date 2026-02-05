@@ -10,7 +10,6 @@
 //   - Test combined xPSR read returns all three registers merged
 //-----------------------------------------------------------------------------
 `timescale 1ns/1ps
-`define SIMULATION
 import alu_pkg::*;
 
 module xpsr_tb;
@@ -55,6 +54,7 @@ module xpsr_tb;
         flags_in = flags;
         write_en = 1;
         @(posedge clk);
+        #1; // Allow flip-flop output to settle after clock edge
         write_en = 0;
 
         // Read APSR (addr 0)
