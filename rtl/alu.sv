@@ -20,7 +20,7 @@ module Alu #()
     //ALu_op decoding and execution combinational logic
     always_comb begin : ALU_Execution
 
-        case (alu_opcode)
+        unique case (alu_opcode)
             ALU_ADD: begin
                 result = {1'b0, data_in1} + {1'b0, data_in2};  // packing on a zero for 33-bit + 33-bit = 32-bit result with carry at bit 33
             end
@@ -59,7 +59,7 @@ module Alu #()
         flags_out.z = (result[31:0] == 32'h0); //ignore top bit result[32] as it is just the carry value
 
         // C and V depend on operation
-        case (alu_opcode)
+        unique case (alu_opcode)
             ALU_ADD: begin
                 flags_out.c = result[32];  // sum is 33-bit
                 flags_out.v = (data_in1[31] == data_in2[31]) && (result[31] != data_in1[31]);
