@@ -23,9 +23,7 @@ jobs:
         id: cache-verilator
         uses: actions/cache@v4
         with:
-          path: |
-            /usr/local/bin/verilator*
-            /usr/local/share/verilator
+          path: ~/verilator-install
           key: verilator-v5.040-${{ runner.os }}
 
       - name: Build and install Verilator v5.040
@@ -35,9 +33,12 @@ jobs:
           cd verilator-src
           git checkout v5.040
           autoconf
-          ./configure
+          ./configure --prefix=$HOME/verilator-install
           make -j $(nproc)
-          sudo make install
+          make install
+
+      - name: Add Verilator to PATH
+        run: echo "$HOME/verilator-install/bin" >> $GITHUB_PATH
 
       - name: Show Verilator version
         run: verilator --version
