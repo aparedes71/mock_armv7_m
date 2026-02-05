@@ -67,5 +67,5 @@ jobs:
             --top-module xpsr_tb \
             rtl/pkgs/alu_pkg.sv rtl/xpsr.sv tb/unit/xpsr_tb.sv
 
-      - name: Run ALU Tests
+      - name: Run xPSR Tests
         run: ./obj_dir/Vxpsr_tb
